@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Ruby 2</title>
+
+    <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+    <meta name="author" content="Hakim El Hattab">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/tomorrow-night-bright.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+
+        <section>
+          <h1>Ruby 2</h1>
+          <h3>The Good Parts</h3>
+          <p>
+            <small><a href="http://twitter.com/dandorman">@dandorman</a></small>
+          </p>
+        </section>
+
+        <section>
+          <h2>The Good Parts</h2>
+          <ul>
+            <li>Keyword Arguments</li>
+            <li>Prepending Modules</li>
+            <li>Lazy Enumeration</li>
+            <li>Refinements</li>
+          </ul>
+
+          <aside class="notes">
+            Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
+          </aside>
+        </section>
+
+        <section>
+          <section>
+            <h2>Keyword Arguments</h2>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", "INFO", Time.now)
+  # =&gt; 2013-04-10 12:34:56 UTC [INFO] Uh-oh.
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  def log(message, level = "INFO", time = Time.now)
+    $stderr.puts "%s [%s] %s" % [time.utc.inspect, level, message]
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", "ERROR")
+  # =&gt; 2013-04-10 12:34:56 UTC [ERROR] Uh-oh.
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  log("Uh-oh.", "ERROR", 5.minutes.ago)
+  # =&gt; 2013-04-10 12:29:56 UTC [ERROR] Uh-oh.
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  log("Uh-oh.", nil, 5.minutes.ago)
+  # =&gt; 2013-04-10 12:29:56 UTC [] Uh-oh.
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  log("Uh-oh.", 5.minutes.ago, "ERROR")
+  # =&gt; NoMethodError: undefined method `utc' for "ERROR":String
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", { level: "INFO", time: Time.now })
+  # =&gt; 2013-04-10 12:34:56 UTC [INFO] Uh-oh.
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  log("Uh-oh.", level: "INFO", time: Time.now)
+  # =&gt; 2013-04-10 12:34:56 UTC [INFO] Uh-oh.
+            </code></pre>
+            </span>
+            <pre class="fragment"><code class="ruby">
+  def log(message, options = {})
+    level = options.fetch(:level) { "INFO" }
+    time  = options.fetch(:time)  { Time.now }
+    $stderr.puts "%s [%s] %s" % [time.utc.inspect, level, message]
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", level: "ERROR")
+  # =&gt; 2013-04-10 12:34:56 UTC [ERROR] Uh-oh.
+            </code></pre>
+            <pre><code class="ruby">
+  log("Uh-oh.", level: "ERROR", time: 5.minutes.ago)
+  # =&gt; 2013-04-10 12:29:56 UTC [ERROR] Uh-oh.
+            </code></pre>
+            <pre><code class="ruby">
+  log("Uh-oh.", time: 5.minutes.ago)
+  # =&gt; 2013-04-10 12:29:56 UTC [INFO] Uh-oh.
+            </code></pre>
+            <pre><code class="ruby">
+  log("Uh-oh.", time: 5.minutes.ago, level: "ERROR")
+  # =&gt; 2013-04-10 12:29:56 UTC [ERROR] Uh-oh.
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", level: "INFO", time: Time.now)
+  # =&gt; 2013-04-10 12:34:56 UTC [INFO] Uh-oh.
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  def log(message, level: "INFO", time: Time.now)
+    $stderr.puts "%s [%s] %s" % [time.utc.inspect, level, message]
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", level: "INFO", time: Time.now, reason: "monkey")
+  # =&gt; 2013-04-10 12:34:56 UTC [INFO] Uh-oh. reason=monkey
+            </code></pre>
+            <pre class="fragment"><code class="ruby">
+  def log(message, options = {})
+    level = options.delete(:level) || "INFO"
+    time  = options.delete(:time)  || Time.now
+
+    output = "%s [%s] %s" % [time.utc.inspect, level, message]
+    output &lt;&lt; options.reduce("") { |str, (k, v)| str + " #{k}=#{v}" }
+
+    $stderr.puts output
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  log("Uh-oh.", level: "INFO", time: Time.now, reason: "monkey")
+  # =&gt; 2013-04-07 00:27:13 [INFO] Uh-oh. reason=monkey
+            </code></pre>
+            <pre><code class="ruby">
+  def log(message, level: "INFO", time: Time.now, **extra)
+    output = "%s [%s] %s" % [time.utc.inspect, level, message]
+    output &lt;&lt; extra.reduce("") { |str, (k, v)| str + " #{k}=#{v}" }
+    $stderr.puts output
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  def foo(a, b = 1, *args, c, d: 2, e: 3, **opts, &amp;block)
+    block.call "a:#{a} b:#{b} args:#{args.inspect} c:#{c} " \
+               "d:#{d} e:#{e}, opts:#{opts.inspect}"
+  end
+
+  foo 1, 2, 3, 4, 5, 6, d: 7, e: 8, f: 9, g: 10 do |str|
+    puts str
+  end
+
+  # =&gt; a:1 b:2 args:[3, 4, 5] c:6 d:7 e:8 opts:{:f =&gt; 9, :g =&gt; 10}"
+            </code></pre>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>Prepending Modules</h2>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module PlusTwo
+    def calculate(number)
+      number + 2
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class TimesThree
+    include PlusTwo
+
+    def calculate(number)
+      super number * 3
+    end
+  end
+
+  TimesThree.new(4) # =&gt; 15
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module PlusTwo
+    def calculate(number)
+      super number + 2
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class TimesThree
+    prepend PlusTwo
+
+    def calculate(number)
+      number * 3
+    end
+  end
+
+  TimesThree.new.calculate(4) # =&gt; 18
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module A
+    def whee
+      puts "in A"
+    end
+  end
+
+  module B
+    def whee
+      puts "in B"
+      super
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module C
+    def whee
+      puts "in C"
+      super
+    end
+  end
+
+  module D
+    def whee
+      puts "in D"
+      super
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class E
+    include A
+    include B
+
+    prepend C
+    prepend D
+
+    def whee
+      puts "in E"
+      super
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  e = E.new
+
+  def e.whee
+    puts "in e"
+    super
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  e.whee
+  # =&gt; in e
+  # =&gt; in D
+  # =&gt; in C
+  # =&gt; in E
+  # =&gt; in B
+  # =&gt; in A
+            </code></pre>
+
+            <pre class="fragment"><code class="ruby">
+  class E
+    include A
+    include B
+    prepend C
+    prepend D
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class Executor
+    def execute
+      sleep 2
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class Executor
+    def execute
+      sleep 2
+    end
+    alias_method :execute_without_timing, :execute
+
+    def execute_with_timing
+      started = Time.now
+      execute_without_timing
+      elapsed = Time.now - started
+      $stderr.puts "Executor#execute: #{elapsed}"
+    end
+    alias_method :execute, :execute_with_timing
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  Executor.new.execute
+  # =&gt; Executor#execute: 2.000156
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class Executor
+    prepend Timing
+
+    def execute
+      sleep 2
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module Timing
+    def execute
+      started = Time.now
+      super
+      elapsed = Time.now - started
+      $stderr.puts "Executor#execute: #{elapsed}"
+    end
+  end
+            </code></pre>
+
+            <pre class="fragment"><code class="ruby">
+  Executor.new.execute
+  # =&gt; Executor#execute: 2.000156
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module Timing
+    def self.prepended(subject)
+      subject.instance_methods.each do |method_name|
+        define_method(method_name) do |*args, &amp;block|
+          started = Time.now
+          super *args, &amp;block
+          elapsed = Time.now - started
+          $stderr.puts "#{subject.name}##{method_name}: #{elapsed}"
+        end
+      end
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class Executor
+    def execute
+      sleep 2
+    end
+
+    prepend Timing
+  end
+            </code></pre>
+
+            <pre class="fragment"><code class="ruby">
+  Executor.new.execute
+  # =&gt; Executor#execute: 2.000156
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  class Executor
+    def execute
+      sleep 2
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module Timing
+    def self.time(subject)
+      subject.instance_methods.each do |method_name|
+        define_method(method_name) do |*args, &amp;block|
+          started = Time.now
+          super *args, &amp;block
+          elapsed = Time.now - started
+          $stderr.puts "#{subject.name}##{method_name}: #{elapsed}"
+        end
+      end
+
+      prepend_features subject
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  Timing.time(Executor)
+
+  Executor.new.execute
+  # =&gt; Executor#execute: 2.000156
+            </code></pre>
+          </section>
+        </section>
+
+        <section>
+          <h1>Thanks!</h1>
+          <p>
+            <small><a href="http://twitter.com/dandorman">@dandorman</a></small>
+          </p>
+        </section>
+
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+          // { src: 'plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+          // { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+        ]
+      });
+
+    </script>
+
+  </body>
+</html>
