@@ -39,29 +39,43 @@
 
         <section>
           <h1>Ruby 2</h1>
-          <h3>The Good Parts</h3>
-          <p>
-            <small><a href="http://twitter.com/dandorman">@dandorman</a></small>
-          </p>
+          <h3>The Happiest Ruby Release Ever</h3>
         </section>
 
         <section>
-          <h2>The Good Parts</h2>
+          <h2>Highlights</h2>
+          <ul>
+            <li>Backwards Compatible</li>
+            <li>Improved Garbage Collector</li>
+            <li>Optimized Method Dispatch</li>
+            <li class="fragment"><code class="ruby">%i[foo bar baz] # =&gt; [:foo, :bar, :baz]</code></li>
+          </ul>
+
+          <aside class="notes">
+            <ul>
+              <li>basically compatible with 1.9, minor caveats. Note Connect success.</li>
+              <li>bitmap GC, copy-on-write friendly</li>
+            </ul>
+          </aside>
+        </section>
+
+        <section>
+          <h2>Closer Look</h2>
           <ul>
             <li>Keyword Arguments</li>
             <li>Prepending Modules</li>
             <li>Lazy Enumeration</li>
             <li>Refinements</li>
           </ul>
-
-          <aside class="notes">
-            Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
-          </aside>
         </section>
 
         <section>
           <section>
             <h2>Keyword Arguments</h2>
+
+            <aside class="notes">
+              The contrived example for this section, a logging function, shows the evolution of a function.
+            </aside>
           </section>
 
           <section>
@@ -74,6 +88,10 @@
     $stderr.puts "%s [%s] %s" % [time.utc.inspect, level, message]
   end
             </code></pre>
+
+            <aside class="notes">
+              It probably started off with a single message parameter, and has since grown, accumulating optional level and time parameters.
+            </aside>
           </section>
 
           <section>
@@ -93,6 +111,11 @@
   log("Uh-oh.", 5.minutes.ago, "ERROR")
   # =&gt; NoMethodError: undefined method `utc' for "ERROR":String
             </code></pre>
+
+            <aside class="notes">
+              This function serves us well until we need to omit the first of the two optional parameters. Now we're bitten by connascence of position.
+              Rubyists generally solve that problem by sending a options Hash as the last argument to a method.
+            </aside>
           </section>
 
           <section>
@@ -112,6 +135,10 @@
     $stderr.puts "%s [%s] %s" % [time.utc.inspect, level, message]
   end
             </code></pre>
+
+            <aside class="notes">
+              Rubyists generally omit the curly braces around that trailing Hash.
+            </aside>
           </section>
 
           <section>
@@ -143,6 +170,11 @@
     $stderr.puts "%s [%s] %s" % [time.utc.inspect, level, message]
   end
             </code></pre>
+
+            <aside class="notes">
+              Now we'll look at using keyword arguments. Here's how to write the calling code in Ruby 2. What's changed? Nothing.
+              All the Hash-munging has been moved into the method definition.
+            </aside>
           </section>
 
           <section>
@@ -161,6 +193,10 @@
     $stderr.puts output
   end
             </code></pre>
+
+            <aside class="notes">
+              What if I want to handle any old random key in addition to the ones I expect?
+            </aside>
           </section>
 
           <section>
@@ -175,10 +211,14 @@
     $stderr.puts output
   end
             </code></pre>
+
+            <aside class="notes">
+              Ruby 2 provides the double-splat operator.
+            </aside>
           </section>
 
           <section>
-            <pre><code class="ruby">
+            <pre class="fragment"><code class="ruby">
   def foo(a, b = 1, *args, c, d: 2, e: 3, **opts, &amp;block)
     block.call "a:#{a} b:#{b} args:#{args.inspect} c:#{c} " \
                "d:#{d} e:#{e}, opts:#{opts.inspect}"
@@ -190,12 +230,20 @@
 
   # =&gt; a:1 b:2 args:[3, 4, 5] c:6 d:7 e:8 opts:{:f =&gt; 9, :g =&gt; 10}"
             </code></pre>
+
+            <aside class="notes">
+              Here's what you <em>could</em> do if you felt like combining all of the various optional arguments, splats, and block argument syntax in Ruby.
+            </aside>
           </section>
         </section>
 
         <section>
           <section>
             <h2>Prepending Modules</h2>
+
+            <aside class="notes">
+              This feels like the "biggest" addition to Ruby the language.
+            </aside>
           </section>
 
           <section>
@@ -206,6 +254,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              We'll start off by looking at a module that we're planning to include.
+            </aside>
           </section>
 
           <section>
@@ -218,7 +270,7 @@
     end
   end
 
-  TimesThree.new(4) # =&gt; 15
+  TimesThree.new(4)  # =&gt; 14
             </code></pre>
           </section>
 
@@ -226,10 +278,15 @@
             <pre><code class="ruby">
   module PlusTwo
     def calculate(number)
+      # super is getting called in the module!
       super number + 2
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Now what happens when we design a module to be prepended? Note `super` has been moved into the module.
+            </aside>
           </section>
 
           <section>
@@ -238,12 +295,21 @@
     prepend PlusTwo
 
     def calculate(number)
+      # no more super
       number * 3
     end
   end
 
-  TimesThree.new.calculate(4) # =&gt; 18
+  TimesThree.new.calculate(4)  # =&gt; 18
             </code></pre>
+
+            <aside class="notes">
+              Prepending a module has changed the method lookup so that a prepended module's methods are called before even the methods of the class.
+            </aside>
+          </section>
+
+          <section>
+            <h3>Belaboring the Point</h3>
           </section>
 
           <section>
@@ -251,6 +317,7 @@
   module A
     def whee
       puts "in A"
+      # no super
     end
   end
 
@@ -261,6 +328,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Modules that are going to be included the old-fashioned way.
+            </aside>
           </section>
 
           <section>
@@ -279,6 +350,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Modules that will be prepended.
+            </aside>
           </section>
 
           <section>
@@ -296,6 +371,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Also defining a class method.
+            </aside>
           </section>
 
           <section>
@@ -307,6 +386,10 @@
     super
   end
             </code></pre>
+
+            <aside class="notes">
+              Also defining a singleton method. Who would like to guess what the output will be?
+            </aside>
           </section>
 
           <section>
@@ -331,6 +414,14 @@
           </section>
 
           <section>
+            <h3>Somewhat More Interesting</h3>
+
+            <aside class="notes">
+              What follows is a more interesting exploration into the ramifications of `Module#prepend`.
+            </aside>
+          </section>
+
+          <section>
             <pre><code class="ruby">
   class Executor
     def execute
@@ -338,6 +429,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Let's say I have an Executor class whose execute method is taking 2 seconds longer than I expect, for some reason. Maybe I'll try and do some profiling or something.
+            </aside>
           </section>
 
           <section>
@@ -357,6 +452,10 @@
     alias_method :execute, :execute_with_timing
   end
             </code></pre>
+
+            <aside class="notes">
+              Here's an alias_method_chain approach.
+            </aside>
           </section>
 
           <section>
@@ -376,6 +475,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Module#prepend to the rescue! What does that Timing module look like?
+            </aside>
           </section>
 
           <section>
@@ -394,6 +497,10 @@
   Executor.new.execute
   # =&gt; Executor#execute: 2.000156
             </code></pre>
+
+            <aside class="notes">
+              Great! But one downside of this approach is that I have to write a method in my module for every method I want to time. Can we do better? This is Ruby, so let's metaprogram! Similar to how Ruby provides `included` and `extended` hooks...
+            </aside>
           </section>
 
           <section>
@@ -428,6 +535,10 @@
   Executor.new.execute
   # =&gt; Executor#execute: 2.000156
             </code></pre>
+
+            <aside class="notes">
+              I've had to move the prepend declaration down. Ruby class definitions are Ruby code, so they are evaluated top to bottom. If the `prepend` comes before any method definitions, Timing won't find any instance methods to wrap.
+            </aside>
           </section>
 
           <section>
@@ -438,6 +549,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              It still kinda sucks that Executor has to think about prepend at all. It just wants to kill time. Can we move the entire responsibility to Timing somehow?
+            </aside>
           </section>
 
           <section>
@@ -457,6 +572,10 @@
     end
   end
             </code></pre>
+
+            <aside class="notes">
+              Block is pretty much the same, but now we'ver added prepend_features. The module getting mixed in can inject itself into a target class.
+            </aside>
           </section>
 
           <section>
@@ -470,10 +589,241 @@
         </section>
 
         <section>
+          <section>
+            <h2>Lazy Enumeration</h2>
+
+            <aside class="notes">
+              I was inspired with a startlingly contrived example for this: Taking the first 10 "FizzBuzz" numbers and then translating them to Roman numerals. Note that there are many, many ways to paint this bikeshed, but I'll just show a couple.
+            </aside>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  require 'roman-numerals'
+
+  NATURALS = (1..Float::INFINITY)
+
+  fizz_buzz = NATURALS.each_with_object([]) do |n, array|
+    break array if array.size &gt;= 10
+    array &lt;&lt; n if (n % 3).zero? || (n % 5).zero?
+  end
+
+  p fizz_buzz.map { |n| RomanNumerals.to_roman(n) }
+  # =&gt; ["III", "V", "VI", "IX", "X", "XII", "XV", "XVIII", "XX", "XXI"]
+            </code></pre>
+
+            <aside class="notes">
+              Bookkeeping: manually shoving numbers into an array, checking the size of that array.
+            </aside>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  require 'roman-numerals'
+
+  fizz_buzz = Enumerator.new do |e|
+    n = 1
+    loop do
+      n += 1 until (n % 3).zero? || (n % 5).zero?
+      e.yield n
+      n += 1
+    end
+  end
+
+  p fizz_buzz.take(10).map { |n| RomanNumerals.to_roman(n) }
+  # =&gt; ["III", "V", "VI", "IX", "X", "XII", "XV", "XVIII", "XX", "XXI"]
+            </code></pre>
+
+            <aside class="notes">
+              Ruby's built-in enumerator. Still some bookkeeping (the n variable), but the concern about the specific number required has been moved external to the enumerator.
+              Note that the take(10) must come before the map, or we'll be waiting around for a ... while.
+            </aside>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  require 'roman-numerals'
+
+  NATURALS = (1..Float::INFINITY)
+
+  p NATURALS.lazy.select { |n| (n % 3).zero? || (n % 5).zero? }
+                 .map { |n| RomanNumerals.to_roman(n) }
+                 .first(10)
+  # =&gt; ["III", "V", "VI", "IX", "X", "XII", "XV", "XVIII", "XX", "XXI"]
+            </code></pre>
+
+            <aside class="notes">
+              Using Enumerator::Lazy. Note that the select cares only about the fizzbuzziness of the number. There is no bookkeeping. It is piped straight into map. There is no need to think about how many exactly are needed until the moment they are actually needed. All the concerns of enumerating are pretty well separated.
+            </aside>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  require 'roman-numerals'
+
+  fizz_buzz = Enumerator.new do |e|
+    n = 1
+    loop do
+      n += 1 until (n % 3).zero? || (n % 5).zero?
+      e.yield n
+      n += 1
+    end
+  end
+
+  p fizz_buzz.lazy.map { |n| RomanNumerals.to_roman(n) }.first(10)
+  # =&gt; ["III", "V", "VI", "IX", "X", "XII", "XV", "XVIII", "XX", "XXI"]
+            </code></pre>
+
+            <aside class="notes">
+              Enumerator::Lazy can be used on custom enumerators too.
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <section>
+            <h2>Refinements</h2>
+
+            <code class="fragment">warning: Refinements are experimental, and the behavior may change in future versions of Ruby!</code>
+
+            <aside class="notes">
+              Essentially, monkey patching with limited scope. Many prominent Rubyists seem to be down on refinements. Somebody said, "Refinements are a solution looking for a problem." The JRuby and Rubinius devs have complained about performance ramifications. But, Matz seems pretty determined to move ahead with them. We'll have to see what 2.1 holds.
+            </aside>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  module Crypto
+    refine String do
+      def encrypt
+        tr "A-Za-z", "N-ZA-Mn-za-m"
+      end
+
+      alias_method :decrypt, :encrypt
+    end
+  end
+            </code></pre>
+
+            <aside class="notes">
+              Note the `refine` block.
+            </aside>
+          </section>
+
+          <section>
+            <h3>In Theory</h3>
+
+            <pre><code class="ruby">
+  require_relative "./crypto"
+  class SecureStore
+    using Crypto
+
+    def store(secret)
+      File.open("/tmp/secret", "w") do |f|
+        f.puts secret.encrypt
+      end
+    end
+    def retrieve
+      File.open("/tmp/secret") do |f|
+        f.read.decrypt
+      end
+    end
+  end
+            </code></pre>
+
+            <aside class="notes">
+              In theory, refinements are scoped to a single class. Note the `using` keyword.
+            </aside>
+          </section>
+
+          <section>
+            <h3>In Practice</h3>
+
+            <pre><code class="ruby">
+  require_relative "./crypto"
+
+  using Crypto  # at global level ... sorta
+
+  class SecureStore
+    # ...
+  end
+            </code></pre>
+
+            <aside class="notes">
+              In practice, `using` must be used at the global scope, but it's really only lexical scope. The `using` is only valid in the same file.
+            </aside>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  require_relative "./secure_store"
+  SecureStore.new.store "Very sensitive information."
+  SecureStore.new.retrieve  # =&gt; "Very sensitive information.\n"
+            </code></pre>
+
+            <aside class="notes">
+              But it works, and where Rubyists generally only use one class per file, this is perhaps not the worst restriction.
+            </aside>
+          </section>
+
+          <section>
+            <h3>One More Stupid Ruby Trick?</h3>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  require 'roman-numerals'
+
+  module RomanFizzBuzz
+    refine Fixnum do
+      def fizz_buzz?
+        (self % 3).zero? || (self % 5).zero?
+      end
+
+      def to_roman
+        RomanNumerals.to_roman self
+      end
+    end
+  end
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  using RomanFizzBuzz
+
+  NATURALS = (1..Float::INFINITY)
+
+  p NATURALS.lazy.select { |n| n.fizz_buzz? }
+                 .map { |n| n.to_roman }
+                 .first(10)
+  # =&gt; ["III", "V", "VI", "IX", "X", "XII", "XV", "XVIII", "XX", "XXI"]
+            </code></pre>
+          </section>
+
+          <section>
+            <pre><code class="ruby">
+  p NATURALS.lazy.select(&amp;:fizz_buzz?).map(&amp;:to_roman).first(10)
+  # =&gt; no superclass method `fizz_buzz?` for 1:Fixnum
+            </code></pre>
+
+            <aside class="notes">
+              Refinements are definitely still experimental, because sadly, this didn't work.
+            </aside>
+          </section>
+        </section>
+
+        <section>
+          <h2>More Info</h2>
+          <ul>
+            <li>Peter Cooper’s <a href="http://www.kickstarter.com/projects/1225193080/the-ruby-20-walkthrough">Ruby 2 Walkthrough</a></li>
+            <li><a href="http://rubyrogues.com/099-rr-ruby-2/">The Ruby Rogues on Ruby 2</a></li>
+          </ul>
+        </section>
+
+        <section>
           <h1>Thanks!</h1>
-          <p>
-            <small><a href="http://twitter.com/dandorman">@dandorman</a></small>
-          </p>
+          <p>Dan Dorman</p>
+          <p><small><a href="http://twitter.com/dandorman">@dandorman</a></small></p>
         </section>
 
       </div>
