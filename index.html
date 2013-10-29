@@ -6,8 +6,8 @@
 
     <title>Ruby 2</title>
 
-    <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
-    <meta name="author" content="Hakim El Hattab">
+    <meta name="description" content="An overview of the goodness in Ruby 2.0.0">
+    <meta name="author" content="Dan Dorman">
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -233,6 +233,26 @@
 
             <aside class="notes">
               Here's what you <em>could</em> do if you felt like combining all of the various optional arguments, splats, and block argument syntax in Ruby.
+            </aside>
+          </section>
+
+          <section>
+            <h3>Ruby 2.1</h3>
+
+            <h4>Required Named Parameters</h4>
+
+            <pre><code class="ruby">
+  def foo(bar:, baz: "qux")
+    "bar: %s, baz: %s" % [bar, baz]
+  end
+
+  foo bar: "whee" #=&gt; "bar: whee, baz: qux"
+
+  foo baz: "sup"  #=&gt; missing keyword: bar (ArgumentError)
+            </code></pre>
+
+            <aside class="notes">
+              Previously, all named arguments were required.
             </aside>
           </section>
         </section>
@@ -578,7 +598,7 @@
             </code></pre>
 
             <aside class="notes">
-              Block is pretty much the same, but now we'ver added prepend_features. The module getting mixed in can inject itself into a target class.
+              Block is pretty much the same, but now we've added prepend_features. The module getting mixed in can inject itself into a target class.
             </aside>
           </section>
 
@@ -758,6 +778,22 @@
           </section>
 
           <section>
+            <h3>Ruby 2.1</h3>
+
+            <p>
+              Refinements are no longer experimental,<br>
+              and they <em>do</em> work at the class level
+            </p>
+
+            <pre><code class="ruby">
+  class SecureStore
+    using Crypto
+    # ...
+  end
+            </code></pre>
+          </section>
+
+          <section>
             <pre><code class="ruby">
   require_relative "./secure_store"
   SecureStore.new.store "Very sensitive information."
@@ -822,6 +858,7 @@
             <li>Peter Cooper’s <a href="http://www.kickstarter.com/projects/1225193080/the-ruby-20-walkthrough">Ruby 2 Walkthrough</a></li>
             <li><a href="http://rubyrogues.com/099-rr-ruby-2/">The Ruby Rogues on Ruby 2</a></li>
             <li><a href="http://rubykoans.com">Ruby Koans</a> updated for Ruby 2</a></li>
+            <li>Konstantin Haase’s <a href="http://rkh.im/ruby-2.1">2.1 blog post</a></li>
           </ul>
         </section>
 
